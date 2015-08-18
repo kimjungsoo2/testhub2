@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+{% load static %}
+{% load testbrowser_filters %}
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Test Hub - Test Report</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+</head>
+
+<body>
+    <div class="well">
+        <h3>{{ key }} Test Report</h3>
+    </div>
+    <div class="container-fluid">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Test Summary</h3>
+            </div>
+            <div class="panel-body">
+                <div class="row">
+                    <div id="summary_chart" class="col-md-8"></div>
+                    <div class="col-md-4">
+                        <canvas id="myChart" width="100%" height="100%"></canvas>
+                        <!--
+                        {% for k, v in testsummary.items %}
+                            {% if k == "Pass" %}
+                                <div id="{{ k }}">
+                                    <span class="label label-success">{{ k }} {{ v }}</span>
+                                </div>
+                            {% elif k == "Fail" %}
+                                <div id="{{ k }}"
+                                    <span class="label label-danger">{{ k }} {{ v }}</span></td>
+                                </div>
+                            {% elif k == "Blocked" %}
+                                <div id="{{ k }}">
+                                    <span class="label label-warning">{{ k }} {{ v }}</span></td>
+                                </div>
+                            {% elif k == "None" %}
+                                <div id="{{ k }}">
+                                    <span class="label label-default">{{ k }} {{ v }}</span></td>
+                                </div>
+                            {% elif k == "Total" %}
+                                <div id="{{ k }}" >
+                                    <span class="label label-primary">{{ k }} {{ v }}</span></td>
+                                </div>
+                            {% else %}
+                                <div id="{{ k }}" >
+                                    <span class="label label-info">{{ k }} {{ v }}</span>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                        -->
+                        <!--
+                        <table class="table" style="display: none">
+                            {% for k, v in testsummary.items %}
+                                {% if k == "Pass" %}
+                                    <tr id="Pass">
+                                        <td><span class="label label-success">{{ k }}</span></td>
+                                        <td>{{ v }}</td>
+                                    </tr>
+                                {% elif k == "Fail" %}
+                                    <tr>
+                                        <td><span class="label label-danger">{{ k }}</span></td>
+                                        <td>{{ v }}</td>
+                                    </tr>
+                                {% elif k == "Blocked" %}
+                                    <tr>
+                                        <td><span class="label label-warning">{{ k }}</span></td>
+                                        <td>{{ v }}</td>
+                                    </tr>
+                                {% elif k == "None" %}
+                                    <tr>
+                                        <td><span class="label label-default">{{ k }}</span></td>
+                                        <td>{{ v }}</td>
+                                    </tr>
+                                {% elif k == "Total" %}
+                                    <tr>
+                                        <td><span class="label label-primary">{{ k }}</span></td>
+                                        <td>{{ v }}</td>
+                                    </tr>
+                                {% else %}
+                                    <tr>
+                                        <td><span class="label label-info">{{ k }}</span></td>
+                                        <td>{{ v }}</td>
+                                    </tr>
+                                {% endif %}
+                            {% endfor %}
+                        </table>
+                        -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!--
+        {% for data in testexecutions %}
+            {{ data.Key }} {{ data.Updated }} {{ data.Test_Results }}
+        {% endfor %}
+        -->
+    </div>
+    <script src="{% static 'js/Chart.min.js' %}"></script>
+    <script src="{% static 'js/d3.min.js' %}"></script>
+    <script src="{% static 'js/jquery-2.1.3.min.js' %}"></script>
+    <script type="text/javascript">
+        var testresults = {{ testresults|safe }};
+        var testsummary = {{ testsummary|safe }};
+        var total = {{ total }};
+        var barHeight = 20;
+        var svg = d3.select("#summary_chart")
+                    .append("svg")
+                    .attr("height", barHeight * testresults.length)
+                    .attr("width", "100%");
+          
+        var max = d3.max(testresults, function(d) {
+            return d.dcount;
+        });
+        
+        var scale = d3.scale.linear()
+                      .domain([0, total]).range([0, "100%"]);
+        
+        // pass bar
+        svg.append("rect")
+           .attr("x", 0).attr("Y", 0)
+           .attr("width", scale(testsummary.Pass)).attr("height", barHeight)
+           .text(testsummary.Pass)
+           .style("fill", "green");
+          
+        // fail bar 
+        svg.append("rect")
+           .attr("x", scale(testsummary.Pass)).attr("Y", 0)
+           .attr("width", scale(testsummary.Fail)).attr("height", barHeight)
+           .text(testsummary.Fail)
+           .style("fill", "red");
+          
+        // blocked bar 
+        svg.append("rect")
+           .attr("x", scale(testsummary.Pass + testsummary.Fail)).attr("Y", 0)
+           .attr("width", scale(testsummary.Blocked)).attr("height", barHeight)
+           .text(testsummary.Blocked)
+           .style("fill", "yellow");
+           
+        // none bar
+        svg.append("rect")
+           .attr("x", scale(testsummary.Pass + testsummary.Blocked + testsummary.Fail)).attr("Y", 0)
+           .attr("width", scale(testsummary.None)).attr("height", barHeight)
+           .text(testsummary.None)
+           .style("fill", "grey");
+        
+        //var barGroup = svg.append("g");
+        
+        /*
+        svg.selectAll("rect")
+           .data(testresults)
+           .enter()
+           .append("rect")
+           .attr("x", 0)
+           .attr("y", function(d, i) { return barHeight * i; })
+           .attr("width", function(d) { return scale(d.dcount); })
+           .attr("height", barHeight - 1)
+           .text(function(d) { return d.Test_Results; })
+           .style("fill", function(d) {
+                switch (d.Test_Results) {
+                    case 'Pass':
+                        return "#5cb85c";
+                        break;
+                    case 'Fail':
+                        return '#d9534f';
+                        break;
+                    case 'Blocked':
+                        return '#f0ad4e';
+                        break;
+                    case 'Total':
+                        return '#337ab7';
+                        break;
+                    default:
+                        return 'grey';
+                        break;
+                }
+            })
+            .on("mouseover", function (d, i) {
+                $("#" + d.Test_Results).show();
+            })
+            .on("mouseleave", function(d, i) {
+                $("#" + d.Test_Results).hide();
+            });
+                
+        svg.selectAll("text")
+           .data(testresults)
+           .enter()
+           .append("text")
+           .attr("x", function(d) { return scale(d.dcount); })
+           .attr("y", function(d, i) { return (barHeight * i) + (barHeight / 2) + 3; })
+           .attr("font-family", "sans-serif")
+           .attr("font-size", "12px")
+           .attr("text-anchor", "end")
+           .attr("fill", "white");
+           //.text(function(d) { return d.Test_Results + ' (' + d.dcount + ')'; });
+           
+        
+        var testresults = {{ testresults|safe }};
+        var barHeight = 10;
+        var svg = d3.select(".panel-body")
+                    .append("svg")
+                    .attr("height", barHeight * testresults.length);
+                     
+        var max = d3.max(testresults, function(d) {
+            return d.dcount;
+        });
+                     
+        var scale = d3.scale.linear()
+                      .domain([0, max]).range([0, 800]);                             
+        var barGroup = svg.append("g");
+         
+        barGroup.selectAll("rect")
+                .data(testresults)
+                .enter()
+                .append("rect")
+                .attr("x", 0)
+                .attr("y", function(d, i) { return barHeight * i; })
+                .attr("width", function(d) { return scale(d.dcount); })
+                .attr("height", 9)
+                .style("fill", "steelblue")
+                .on("mouseover", function (d, i) {
+                    alert(d.dcount);
+                });
+        
+        var data = {
+            labels: [""],
+            datasets: []
+        }
+        
+        $.each(testresults, function(index, dict) {
+           var dataset = {}
+
+           dataset['data'] = [dict.dcount];
+           dataset['label'] = dict.Test_Results;
+           
+           switch (dict.Test_Results) {
+                case 'Pass':
+                    dataset['fillColor'] = 'green';
+                    dataset['strokeColor'] = 'green';
+                    break;
+                case 'Fail':
+                    dataset['fillColor'] = 'red';
+                    dataset['strokeColor'] = 'red';
+                    break;
+                case 'Blocked':
+                    dataset['fillColor'] = 'yellow';
+                    dataset['strokeColor'] = 'yellow';
+                    break;
+           }
+            
+           data.datasets.push(dataset);
+        });
+        
+        //alert(JSON.stringify(data));*/
+        
+        var data = [
+                {
+                    value: testsummary.Pass,
+                    color:"green",
+                    //highlight: "#FF5A5E",
+                    label: "Pass"
+                },
+                {
+                    value: testsummary.Fail,
+                    color: "red",
+                    //highlight: "#5AD3D1",
+                    label: "Fail"
+                },
+                {
+                    value: testsummary.Blocked,
+                    color: "yellow",
+                    //highlight: "#FFC870",
+                    label: "Blocked"
+                },
+                {
+                    value: testsummary.None,
+                    color: "grey",
+                    //highlight: "#FFC870",
+                    label: "None"
+                }
+            ]
+        
+        var ctx = document.getElementById("myChart").getContext("2d");
+        var myDoughnutChart = new Chart(ctx).Doughnut(data);
+        //var myBarChart = new Chart(ctx).Bar(data);
+    </script>
+</body>
+</html>

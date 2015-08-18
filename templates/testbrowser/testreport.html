@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+{% load static %}
+{% load testbrowser_filters %}
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Test Hub - Test Report</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+</head>
+
+<body>
+    <div class="well">
+        <h1>{{ key }} {{ testplansummary }}
+            <small><button id="btnShowAll" type="button" class="btn btn-link" style="display: none">Show All</button></small>
+        </h1>
+    </div>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">Test Results</h3>
+                    </div>
+                    <div class="panel-body" style="padding-left: 0px;">
+                        <canvas id="summaryDonutChart"></canvas>    
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">Components Coverage</h3>
+                    </div>
+                    <div class="panel-body" style="padding-left: 0px;">
+                        <canvas id="componentsRadarChart"></canvas>   
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">Category</h3>
+                    </div>
+                    <div class="panel-body" style="padding-left: 0px;">
+                        <canvas id="categoryRadarChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">Defects</h3>
+                    </div>
+                    <div class="panel-body">
+                        <canvas id="defectBarChart"></canvas>  
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!--
+            <div class="col-md-2">
+                <canvas id="summaryDonutChart" width="200" height="300"></canvas>    
+            </div>
+            <div class="col-md-4">
+                <canvas id="componentsRadarChart" width="400" height="300"></canvas>
+            </div>
+            <div class="col-md-4">
+                <canvas id="defectBarChart" width="200" height="300"></canvas>
+            </div>
+        -->
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Details</h3>
+            </div>
+            <div class="panel-body">
+                <table class="table">
+                    <tr>
+                        <th class="col-md-1">Test Case</th>
+                        <th>Summary</th>
+                        <th>Result</th>
+                        <th class="col-md-2">Updated</th>
+                        <th>Assignee</th>
+                        <th class="col-md-1">Components</th>
+                        <th class="col-md-1">Defect CR</th>
+                    </tr>
+                    {% for te in testexecutions %}
+                        {% if te.Labels %}
+                        <tr label="{{ te.Test_Results }}" defect="{{ te.Remote_Defect_CR }}" components="{{ te.Components }}"
+                            category="{{ te.Labels }}">
+                        {% else %}
+                        <tr label="{{ te.Test_Results }}" defect="{{ te.Remote_Defect_CR }}" components="{{ te.Components }}"
+                            category="None">
+                        {% endif %}
+                            <td>{{ te.Test_Case_ID }}</td>
+                            <td>{{ te.Summary }}</td>
+                            {% if te.Test_Results == "Pass" %}
+                            <td><span class="label label-success">{{ te.Test_Results }}</span></td>
+                            {% elif te.Test_Results == "Fail" %}
+                            <td><span class="label label-danger">{{ te.Test_Results }}</span></td>
+                            {% elif te.Test_Results == "Blocked" %}
+                            <td><span class="label label-warning">{{ te.Test_Results }}</span></td>
+                            {% elif te.Test_Results == None %}
+                            <td><span class="label label-default">{{ te.Test_Results }}</span></td>
+                            {% else %}
+                            <td><span class="label label-primary">{{ te.Test_Results }}</span></td>
+                            {% endif %}
+                            <td>{{ te.Updated }}</td>
+                            <td>{{ te.Assignee }}</td>
+                            <td>{{ te.Components }}</td>
+                            <td>
+                                {% if te.Remote_Defect_CR %}
+                                <a href="http://jira.mot.com/browse/{{ te.Remote_Defect_CR }}" target="_blank">{{ te.Remote_Defect_CR }}</a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+    </div>
+    <script src="{% static 'js/Chart.min.js' %}"></script>
+    <script src="{% static 'js/d3.min.js' %}"></script>
+    <script src="{% static 'js/jquery-2.1.3.min.js' %}"></script>
+    <script type="text/javascript">
+    $(document).ready(function() {
+        var testsummary = {{ testsummary|safe }};
+        var total = {{ totalexecutions }};
+        var data = [];
+        var colorCode, highlightCode;
+    
+        $.each(testsummary, function(k, v) {
+           switch (k) {
+            case 'Pass':
+                colorCode = "#5cb85c";
+                highlightCode = "#91cf91";
+                break;
+            case 'Fail':
+                colorCode = "#d9534f";
+                highlightCode = "#e7908e";
+                break;
+            case 'Blocked':
+                colorCode = "#FDB45C";
+                highlightCode = "#fed7a8";
+                break;
+            case 'None':
+                colorCode = "#777";
+                highlightCode = "#9d9d9d";
+                break;
+            default:
+                colorCode = "#337ab7";
+                highlightCode = "#63a0d4";
+                break;
+           }
+           
+           data.push({
+            value: v,
+            color: colorCode,
+            highlight: highlightCode,
+            label: k
+           });
+        });
+
+        var ctxDonut = document.getElementById("summaryDonutChart").getContext("2d");
+        var myDoughnutChart = new Chart(ctxDonut).Doughnut(data, {
+            animation:true,
+            responsive: true,
+            //showTooltips: false,
+            //percentageInnerCutout : 70,
+            //segmentShowStroke : false,
+            onAnimationComplete: function() {
+                //InnerDonutText($("#summaryDonutChart"), ctxDonut, "Summary", 'black');
+            }
+        });
+        
+        $("#summaryDonutChart").click(function(evt) {
+           var segment = myDoughnutChart.getSegmentsAtEvent(evt);
+           
+           if (segment.length > 0) {
+            var label = segment[0].label;
+            var value = segment[0].value;
+            var fillColor = segment[0].fillColor;
+            var text = Math.round((value / total) * 100).toFixed(1) + "%";
+            
+            //alert(JSON.stringify(segment[0]));
+            //alert(text);
+            
+            InnerDonutText($("#summaryDonutChart"), ctxDonut, text, fillColor);
+            
+            $(".table").find("tr:has(td)").hide();
+            $(".table").find("[label*='" + label + "']").show();
+            
+            // show 'show all' button
+            $("#btnShowAll").show();
+           }
+        });
+        
+        $('#btnShowAll').on('click', function () {
+            $(".table").find("tr:has(td)").show();
+            $(this).hide();
+        });
+        
+        function InnerDonutText(canvas, ctx, text, color) {
+            var canvasWidth = canvas.width();
+            var canvasHeight = canvas.height();
+            var constant = 150;
+            var fontSize = (canvasHeight / constant).toFixed(2);
+            ctx.font = fontSize + "em Verdana";
+            ctx.textBaseline = "middle";
+            var textWidth = ctx.measureText(text).width;
+            var textPosX = Math.round((canvasWidth - textWidth) / 2);
+            ctx.fillStyle = color;
+            //ctx.fillText(text, textPosX, canvasHeight / 2);
+            ctx.fillText(text, canvasWidth / 2, canvasHeight / 2);
+        }
+        
+        var defects = {{ defects|safe }};
+        var dataset_data = [];
+        var labels = [];
+        var barWidth = 200;
+        
+        //alert(JSON.stringify(testsummary) + '\n' + JSON.stringify(defects));
+        
+        $.each(defects, function(index, dict) {
+            if (dict.Remote_Defect_CR) {
+                labels.push(dict.Remote_Defect_CR);
+                dataset_data.push(dict.dcount);
+            }
+        });
+        
+        var data = {
+            labels: labels,
+            datasets: [
+                {
+                    label: "number of defects",
+                    //fillColor: "rgba(220,220,220,0.2)",
+                    fillColor: "#337ab7",
+                    //strokeColor: "rgba(220,220,220,1)",
+                    //pointColor: "rgba(220,220,220,1)",
+                    //pointStrokeColor: "#fff",
+                    //pointHighlightFill: "#fff",
+                    pointHighlighFill: "#337ab7",
+                    //pointHighlightStroke: "rgba(220,220,220,1)",
+                    data: dataset_data
+                }
+            ]
+        }
+        
+        //$("#defectBarChart").width(barWidth * labels.length).height(300);
+        var ctxBar = document.getElementById("defectBarChart").getContext("2d");
+        ctxBar.canvas.style.height = "221px";
+        var defectBarChart = new Chart(ctxBar).Bar(data);
+        
+        $("#defectBarChart").click(function(evt) {
+           var activeBars = defectBarChart.getBarsAtEvent(evt);
+           
+           if (activeBars.length > 0) {
+                var label = activeBars[0].label;
+                
+                $(".table").find("tr:has(td)").hide();
+                $(".table").find("[defect*='" + label + "']").show();
+                
+                // show 'show all' button
+                $("#btnShowAll").show();
+           }
+        });
+        
+        var components = {{ components|safe }};
+        var dataset_data = [];
+        var labels = [];
+        
+        $.each(components, function(k, v) {
+           labels.push(k);
+           dataset_data.push(v.length);
+        });
+        
+        var data = {
+            labels: labels,
+            datasets: [
+                {
+                    label: "Number of Test Cases",
+                    data: dataset_data,
+                    fillColor: "rgba(151,187,205,0.2)"
+                }
+            ]
+        }
+        
+        var ctxRadar = document.getElementById("componentsRadarChart").getContext("2d");
+        ctxRadar.canvas.style.height = "221px";
+        var componentsRadarChart = new Chart(ctxRadar).Radar(data);
+        
+        $("#componentsRadarChart").click(function(evt) {
+           var activePoints = componentsRadarChart.getPointsAtEvent(evt);
+           
+           if (activePoints.length > 0) {
+                var label = activePoints[0].label;
+                
+                $(".table").find("tr:has(td)").hide();
+                $(".table").find("[components*='" + label + "']").show();
+                
+                // show 'show all' button
+                $("#btnShowAll").show();
+           }
+        });
+        
+        var category = {{ category|safe }};
+        var dataset_data = [];
+        var labels = [];
+        
+        $.each(category, function(k, v) {
+           labels.push(k);
+           dataset_data.push(v.length);
+        });
+        
+        var data = {
+            labels: labels,
+            datasets: [
+                {
+                    label: "Number of Test Cases",
+                    data: dataset_data,
+                    fillColor: "rgba(151,187,205,0.2)"
+                }
+            ]
+        }
+        
+        var ctxRadar = document.getElementById("categoryRadarChart").getContext("2d");
+        ctxRadar.canvas.style.height = "221px";
+        var categoryRadarChart = new Chart(ctxRadar).Radar(data);
+        
+        $("#categoryRadarChart").click(function(evt) {
+           var activePoints = categoryRadarChart.getPointsAtEvent(evt);
+           
+           if (activePoints.length > 0) {
+                var label = activePoints[0].label;
+                
+                $(".table").find("tr:has(td)").hide();
+                $(".table").find("[category*='" + label + "']").show();
+                
+                // show 'show all' button
+                $("#btnShowAll").show();
+           }
+        });
+    });
+    </script>
+</body>
+</html>

@@ -1,0 +1,2 @@
+<a href="{% url 'testbrowser:testreport' key='CST-462' %}" target="_blank">
+<a href="{% url 'testbrowser:testreport' %}" target="_blank">

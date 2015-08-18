@@ -1,0 +1,7 @@
+{% if secondaries %}
+    <h5>Secondary Domain List</h5>
+    {% for s in secondaries %}
+        <!--<label class="btn btn-primary">{{ s.name }}</label>-->
+        <button type="button" class="btn btn-info">{{ s.name }}</button>
+    {% endfor %}
+{% endif %} 

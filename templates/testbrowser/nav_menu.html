@@ -1,0 +1,42 @@
+{% extends 'testbrowser/base.html' %}
+{% load static %}
+{% block testbrowser_menu %}
+    <!--
+    <h5>Secondary Domain List</h5>
+    <div id="primary_domain_dropdown" class="btn-group btn-block">
+        <button id="primary_btn" type="button" class="btn btn-default btn-block dropdown-toggle" data-toggle="dropdown"
+                aria-expanded="false">
+            <!--{% with primaries|first as first_domain %}{{ first_domain }}{% endwith %} <span class="caret"></span>
+            Primary Domains <span class="caret"></span>
+        </button>
+        <ul id="primary_domain"  class="dropdown-menu" role="menu" style="width: 100%;">
+            {% if primaries %}
+                {% for p in primaries %}
+                    <li><a>{{ p }}</a></li>
+                {% endfor %}
+            {% endif %}
+        </ul>
+    </div>
+    -->
+    <li id="primary_domain" class="dropdown">
+        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+            Primary Domain<span class="caret"></span>
+        </a>
+        <ul class="dropdown-menu" role="menu">
+            {% if primaries %}
+                {% for p in primaries %}
+                    <li><a href="#">{{ p }}</a></li>
+                {% endfor %}
+            {% endif %}
+        </ul>
+    </li>
+    <li id="issuetype" class="dropdown">
+        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+            Test Plan<span class="caret"></span>
+        </a>
+        <ul class="dropdown-menu" role="menu">
+            <li><a href="#">Test Plan</a></li>
+            <li><a href="#">Test Case</a></li>
+        </ul>
+    </li>
+{% endblock %}

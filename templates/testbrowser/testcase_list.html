@@ -1,0 +1,148 @@
+<div class="well">
+    <h2 id="primary">{{ primary }}</h2>
+    <h5 id="total_selected">{{ testcases|length }} testcases in total.</h5>
+</div>
+
+<ul id="filter" class="list-group">
+    <li class="list-group-item" id="secondary_domain"><strong>Secondary Domain</strong><br>
+        {% if filters.secondary_domain %}
+            {% for item in filters.secondary_domain %}
+                <a class="btn btn-info btn-xs" style="margin-bottom:3px;">{{ item }}</a>
+            {% endfor %}
+        {% endif %}
+    </li>
+    <li class="list-group-item" id="component"><strong>Components</strong><br>
+        {% if filters.component %}
+            {% for item in filters.component %}
+                <a class="btn btn-info btn-xs" style="margin-bottom:3px;">{{ item }}</a>
+            {% endfor %}
+        {% endif %}
+    </li>
+    <li class="list-group-item" id="reglevel"><strong>Reg. Level</strong><br>
+        {% if filters.reglevel %}
+            {% for item in filters.reglevel %}
+                <a class="btn btn-info btn-xs" style="margin-bottom:3px;">{{ item }}</a>
+            {% endfor %}
+        {% endif %}
+    </li>
+    <li class="list-group-item" id="priority"><strong>Priority</strong><br>
+        {% if filters.priority %}
+            {% for item in filters.priority %}
+                <a class="btn btn-info btn-xs" style="margin-bottom:3px;">{{ item }}</a>
+            {% endfor %}
+        {% endif %}
+    </li>
+    <li class="list-group-item" id="feature"><strong>Features</strong><br>
+        {% if filters.feature %}
+            {% for item in filters.feature %}
+                <a class="btn btn-info btn-xs" style="margin-bottom:3px;">{{ item }}</a>
+            {% endfor %}
+        {% endif %}
+    </li>
+    <li class="list-group-item" id="test_type"><strong>Testing Type</strong><br>
+        {% if filters.test_type %}
+            {% for item in filters.test_type %}
+                <a class="btn btn-info btn-xs" style="margin-bottom:3px;">{{ item }}</a>
+            {% endfor %}
+        {% endif %}
+    </li>
+    <li class="list-group-item" id="requirement"><strong>Requirements</strong><br>
+        {% if filters.requirement %}
+            {% for item in filters.requirement %}
+                <a class="btn btn-info btn-xs" style="margin-bottom:3px;">{{ item }}</a>
+            {% endfor %}
+        {% endif %}
+    </li>
+    <li class="list-group-item" id="labels"><strong>Labels</strong><br>
+        {% if filters.labels %}
+            {% for item in filters.labels %}
+                <a class="btn btn-info btn-xs" style="margin-bottom:3px;">{{ item }}</a>
+            {% endfor %}
+        {% endif %}
+    </li>
+</ul>
+
+{% if testcases %}
+<table class="table">
+    <tbody>
+        <tr>
+            <th>Test Case ID</th>
+            <th>Summary</th>
+            <th>Reg. Level</th>
+            <th>Requirement</th>
+            <th>Secondary Domain</th>
+            <th>Components</th>
+            <th>Labels</th>
+            <th>Results</th>
+        </tr>
+        {% for tc in testcases %}
+        <tr class="row_data" reglevel="{{ tc.Regression_Level }}" priority="{{ tc.Priority }}"
+            requirement="{{ tc.Requirement }}" secondary_domain="{{ tc.Secondary_domain_name }}"
+            component="{{ tc.Components }}" labels="{{ tc.Labels }}">
+            <td><a href="http://dalek.mot.com/browse/{{ tc.Key }}" target="_blank">{{ tc.Key }}</a></td>
+            <td>{{ tc.Summary }}</td>
+            <td>{{ tc.Regression_Level }}</td>
+            <td>{{ tc.Requirement }}</td>
+            <td>{{ tc.Secondary_domain_name }}</td>
+            <td>{{ tc.Components }}</td>
+            <td>{{ tc.Labels }}</td>
+            <td>
+                <!--<a href="#" onClick="return false;">-->
+                <!--<a data-toggle="collapse" href="#{{ tc.Key }}" aria-expanded="false" aria-controls="{{ tc.Key }}">-->
+                <a href="#{{ tc.Key }}" data-toggle="modal" data-target="#dialog_lg_modal">
+                    <div class="progress">
+                        <div class="progress-bar progress-bar-success" style="width: {{ tc.TestReport.Pass }}">
+                            <span class="sr-only">{{ tc.TestReport.Pass }}</span>
+                        </div>
+                        <div class="progress-bar progress-bar-danger" style="width: {{ tc.TestReport.Fail }}">
+                            <span class="sr-only">{{ tc.TestReport.Fail }}</span>
+                        </div>
+                        <div class="progress-bar progress-bar-warning" style="width: {{ tc.TestReport.Blocked }}">
+                            <span class="sr-only">{{ tc.TestReport.Blocked }}</span>
+                        </div>
+                    </div>
+                </a>
+                <div id="{{ tc.Key }}" class="collapse">
+                    <table class="table">
+                        <tbody>
+                            <tr>
+                                <th>Key</th>
+                                <th>Result</th>
+                                <th>Updated</th>
+                                <th>Test Plan</th>
+                                <th>Tester</th>
+                                <th>Defect CR</th>
+                            </tr>
+                            {% for te in tc.TestHistory %}
+                                <tr>
+                                    <td><a href="http://dalek.mot.com/browse/{{ te.Key }}" target="_blank">{{ te.Key }}</a></td>
+                                    <td>
+                                        {% if te.Test_Results == "Pass" %}
+                                            <span class="label label-success">{{ te.Test_Results }}</span>
+                                        {% elif te.Test_Results == "Fail" %}
+                                            <span class="label label-danger">{{ te.Test_Results }}</span>
+                                        {% elif te.Test_Results == "Blocked" %}
+                                            <span class="label label-warning">{{ te.Test_Results }}</span>
+                                        {% else %}
+                                            <span class="label label-default">{{ te.Test_Results }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ te.Updated }}</td>
+                                    <td><a href="http://dalek.mot.com/browse/{{ te.Test_Plan_CR }}" target="_blank">{{ te.Test_Plan_CR }}</a></td>
+                                    <td>{% if te.Tester %}{{ te.Tester }}{% endif %}</td>
+                                    <td>
+                                    {% if te.Remote_Defect_CR %}
+                                        <a href="http://jira.mot.com/browse/{{ te.Remote_Defect_CR }}" target="_blank">{{ te.Remote_Defect_CR }}</a>
+                                    {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}

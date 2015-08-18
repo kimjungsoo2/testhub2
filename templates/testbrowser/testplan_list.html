@@ -1,0 +1,157 @@
+<div class="well">
+    <h2 id="primary">{{ primary }}</h2>
+    <h5 id="total_selected">{{ testplans|length }} testplans in total.</h5>
+    <!--
+    <div class="btn-group" role="group" aria-label="...">
+        <button type="button" class="btn btn-success">Closed</button>
+        <button type="button" class="btn btn-warning">Testing</button>
+        <button type="button" class="btn btn-primary">New</button>
+    </div>
+    <div class="btn-group" role="group" aria-label="...">
+        {% if secondaries %}
+            {% for s in secondaries %}
+                <!--<label class="btn btn-primary">{{ s.name }}</label>
+                <button type="button" class="btn btn-info">{{ s.name }}</button>
+            {% endfor %}
+        {% endif %} 
+    </div>
+    -->
+</div>
+<ul class="list-group">
+    <li class="list-group-item" id="secondary"><strong>Secondary Domains</strong><br>
+        {% if secondaries %}
+            {% for s in secondaries %}
+                <a class="btn btn-info btn-xs" style="margin-bottom:3px;">{{ s.name }}</a>
+            {% endfor %}
+        {% endif %}
+    </li>
+    <li class="list-group-item" id="status"><strong>Status</strong><br>
+        <a class="btn btn-success btn-xs">Closed</a>
+        <a class="btn btn-warning btn-xs">Testing</a>
+        <a class="btn btn-primary btn-xs">New</a>
+    </li>
+</ul>
+
+<div class="panel-group" id="accordion" role="tablist" aria-multiselectable="false">
+{% if testplans %}
+    {% for tp in testplans %}
+        <div class="panel panel-default" secondary="{{ tp.Secondary_domain }}" status="{{ tp.Status }}">
+            <div class="panel-heading" role="tab" id="{{ tp.Key }}">
+                <h4 class="panel-title">
+                    <!--<a href="#{{ tp.Key }}" data-toggle="modal" data-target="#dialog_report_modal">-->
+                    <!--<a href="javascript:void(0);">-->
+                    <!--<a href="/testbrowser/testreport" target="_blank">-->
+                    <a href="{% url 'testbrowser:testreport' key=tp.Key %}" target="_blank">
+                        <span class="glyphicon glyphicon-dashboard pull-right" style="color: grey" key="{{ tp.Key }}"></span>
+                    </a>
+                    <p class="pull-right">&nbsp;</p>
+                    <a data-toggle="collapse" data-parent="#accordion" href="#{{ tp.Key }}_collapse" aria-expanded="false"
+                       aria-controls="{{ tp.Key }}_collapse">
+                        {{ tp.Key }} {{ tp.Summary }}
+                        <span class="badge">{{ tp.TestCases_In_TestPlan|length }}</span>
+                        {% if tp.Status == 'Testing' %}
+                            <a href="http://dalek.mot.com/browse/{{ tp.Key }}" target="_blank">
+                                <span class="label label-warning pull-right">{{ tp.Status }}</span>
+                            </a>
+                        {% elif tp.Status == 'New' %}
+                            <a href="http://dalek.mot.com/browse/{{ tp.Key }}" target="_blank">
+                                <span class="label label-primary pull-right">{{ tp.Status }}</span>
+                            </a>
+                        {% elif tp.Status == 'Closed' %}
+                            <a href="http://dalek.mot.com/browse/{{ tp.Key }}" target="_blank">
+                                <span class="label label-success pull-right">{{ tp.Status }}</span>
+                            </a>
+                        {% else %}
+                            <a href="http://dalek.mot.com/browse/{{ tp.Key }}" target="_blank">
+                                <span class="label label-default pull-right">{{ tp.Status }}</span>
+                            </a>
+                        {% endif %}
+                    </a>
+                </h4>
+            </div>
+            <div id="{{ tp.Key }}_collapse" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="{{ tp.Key }}">
+                <div class="panel-body">
+                    <ul class="list-group">
+                        <li class="list-group-item">
+                            <strong>Primary Software:</strong>
+                            <ul>
+                            {% for item in tp.Primary_Software %}
+                                <li>{{ item }}</li>
+                            {% endfor %}
+                            </ul>
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Resolution:</strong> {{ tp.Resolution }}
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Priority:</strong> {{ tp.Priority }}
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Primary Domain:</strong> {{ tp.Primary_domain }}
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Secondary Domain:</strong> {{ tp.Secondary_domain }}
+                        </li>
+                    </ul>
+                    <table class="table">
+                        <tbody>
+                            <tr>
+                                <th>Test Case ID</th>
+                                <th>Summary</th>
+                                <th>Reg. Level</th>
+                                <th>Result</th>
+                                <th>Requirement</th>
+                                <th>Seconary Domain</th>
+                                <th>Components</th>
+                                <th>Labels</th>
+                                <th>Defect</th>
+                            </tr>
+                            {% for tc in tp.TestCases_In_TestPlan %}
+                            <tr>
+                                <td><a href="http://dalek.mot.com/browse/{{ tc.Key }}" target="_blank">{{ tc.Key }}</a></td>
+                                <td>{{ tc.Summary }}</td>
+                                <td>{{ tc.Regression_Level }}</td>
+                                {% if tc.Result == 'Pass' %}
+                                    <td>
+                                        <a href="http://dalek.mot.com/browse/{{ tc.Result_Key }}" target="_blank">
+                                            <span class="label label-success pull-right">{{ tc.Result }}</span>
+                                        </a>
+                                    </td>
+                                {% elif tc.Result == 'Fail' %}
+                                    <td>
+                                        <a href="http://dalek.mot.com/browse/{{ tc.Result_Key }}" target="_blank">
+                                            <span class="label label-danger pull-right">{{ tc.Result }}</span>
+                                        </a>
+                                    </td>
+                                {% elif tc.Result == 'Blocked' %}
+                                    <td>
+                                        <a href="http://dalek.mot.com/browse/{{ tc.Result_Key }}" target="_blank">
+                                            <span class="label label-warning pull-right">{{ tc.Result }}</span>
+                                        </a>
+                                    </td>
+                                {% else %}
+                                    <td>
+                                        <a href="http://dalek.mot.com/browse/{{ tc.Result_Key }}" target="_blank">
+                                            <span class="label label-default pull-right">{{ tc.Result }}</span>
+                                        </a>
+                                    </td>
+                                {% endif %}
+                                <td>{{ tc.Requirement }}</td>
+                                <td>{{ tc.Secondary_domain }}</td>
+                                <td>{{ tc.Components }}</td>
+                                <td>{{ tc.Labels }}</td>
+                                <td>
+                                    {% if tc.Remote_Defect_CR %}
+                                        <a href="http://jira.mot.com/browse/{{ tc.Remote_Defect_CR }}" target="_blank">{{ tc.Remote_Defect_CR }}</a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+{% endif %}
+</div>
